@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Task | Work Tracker</title>
+    <style>
+        :root {
+            --bg: #f5f6fa; --card-bg: #ffffff; --text: #2d3436; --text-secondary: #636e72;
+            --border: #e0e4e8; --shadow: 0 2px 12px rgba(0,0,0,0.06); --blue: #5b6af0;
+            --blue-light: #eef0ff; --coral: #f0626e; --coral-light: #fff0f1;
+            --green: #22c55e; --radius: 14px; --radius-sm: 8px;
+            --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .top-bar {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .top-bar a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+        .main-content {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .card {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            margin-bottom: 30px;
+        }
+        .card h2 {
+            text-align: center;
+            font-weight: 700;
+            margin-bottom: 20px;
+            font-size: 1.6rem;
+        }
+        .date-range-row {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .input-group label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+        .input-group input[type="date"] {
+            padding: 12px 16px;
+            border-radius: 14px;
+            border: 2px solid rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+        }
+        .input-group input[type="date"]:focus {
+            border-color: #fff;
+            background: rgba(255,255,255,0.2);
+        }
+        .btn {
+            padding: 12px 24px;
+            border-radius: 14px;
+            border: none;
+            background: #fff;
+            color: #5b6af0;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+        .btn:hover {
+            background: #f0f0ff;
+            transform: translateY(-2px);
+        }
+        .error-msg {
+            color: #ffb3b3;
+            text-align: center;
+            margin-top: 8px;
+            display: none;
+        }
+        .error-msg.show { display: block; }
+        .date-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .date-card {
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: 0.2s;
+            font-weight: 600;
+            color: #fff;
+        }
+        .date-card:hover {
+            background: rgba(255,255,255,0.35);
+            border-color: #fff;
+        }
+        .date-card.selected {
+            background: #fff;
+            color: #5b6af0;
+            border-color: #fff;
+        }
+        .task-form {
+            display: none;
+            margin-top: 20px;
+        }
+        .task-form.active {
+            display: block;
+        }
+        .task-form .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: flex-end;
+        }
+        .task-form input, .task-form select {
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .task-form input:focus {
+            border-color: #fff;
+            background: rgba(255,255,255,0.25);
+        }
+        .task-form label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+        .time-overlap-warn {
+            color: #ffb3b3;
+            font-size: 0.85rem;
+            display: none;
+            margin-left: 10px;
+        }
+        .time-overlap-warn.show { display: inline; }
+        .saved-tasks {
+            margin-top: 25px;
+        }
+        .saved-task-item {
+            background: rgba(255,255,255,0.2);
+            padding: 12px 18px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+        }
+        .saved-task-item .delete-btn {
+            background: transparent;
+            border: none;
+            color: #ff6b6b;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/tracker.html?mode=partner">← Back to Tracker</a>
+        <span>📅 Schedule Tasks</span>
+        <div></div>
+    </div>
+
+    <div class="main-content">
+        <!-- Date range selection card -->
+        <div class="card">
+            <h2>Select a Date Range</h2>
+            <div class="date-range-row">
+                <div class="input-group">
+                    <label>From</label>
+                    <input type="date" id="rangeStart">
+                </div>
+                <div class="input-group">
+                    <label>To</label>
+                    <input type="date" id="rangeEnd">
+                </div>
+                <button class="btn" id="showDatesBtn">Show Dates</button>
+            </div>
+            <div class="error-msg" id="rangeError"></div>
+            <div class="date-cards-grid" id="dateCardsContainer"></div>
+        </div>
+
+        <!-- Task creation form (hidden until a date is selected) -->
+        <div class="card task-form" id="taskFormCard">
+            <h2>Add Task for <span id="selectedDateLabel"></span></h2>
+            <div class="form-row">
+                <div style="flex:1; display:flex; flex-direction:column; gap:5px;">
+                    <label>Task Name</label>
+                    <input type="text" id="taskName" placeholder="e.g., Client meeting">
+                </div>
+            </div>
+            <div class="form-row">
+                <div style="display:flex; flex-direction:column; gap:5px;">
+                    <label>Start Time</label>
+                    <input type="time" id="startTime" step="60" value="09:00">
+                </div>
+                <div style="display:flex; flex-direction:column; gap:5px;">
+                    <label>End Time</label>
+                    <input type="time" id="endTime" step="60" value="10:00">
+                </div>
+                <span class="time-overlap-warn" id="overlapWarning">⚠️ This time overlaps an existing task</span>
+            </div>
+            <button class="btn" id="addTaskBtn">Add Task</button>
+            <div class="error-msg" id="taskError"></div>
+
+            <!-- List of saved tasks for that date -->
+            <div class="saved-tasks" id="savedTasksContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let selectedDate = null;   // 'YYYY-MM-DD'
+        let existingTasks = [];    // tasks for that date (from server)
+
+        // ========== Session check ==========
+        async function checkSession() {
+            const res = await fetch(API_BASE + '/api/check-session');
+            const data = await res.json();
+            if (!data.loggedIn) window.location.href = '/login.html';
+        }
+
+        // ========== Date range helpers ==========
+        function getTodayStr() {
+            const d = new Date();
+            return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        }
+
+        function formatDateDisplay(dateStr) {
+            const d = new Date(dateStr + 'T00:00:00');
+            return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+        }
+
+        // ========== Show dates in range ==========
+        document.getElementById('showDatesBtn').addEventListener('click', () => {
+            const startVal = document.getElementById('rangeStart').value;
+            const endVal = document.getElementById('rangeEnd').value;
+            const errorEl = document.getElementById('rangeError');
+            errorEl.classList.remove('show');
+            errorEl.textContent = '';
+
+            if (!startVal || !endVal) {
+                errorEl.textContent = 'Please select both dates.';
+                errorEl.classList.add('show');
+                return;
+            }
+            const start = new Date(startVal + 'T00:00:00');
+            const end = new Date(endVal + 'T00:00:00');
+            const today = new Date(getTodayStr() + 'T00:00:00');
+
+            if (start < today) {
+                errorEl.textContent = 'Start date must be today or later.';
+                errorEl.classList.add('show');
+                return;
+            }
+            if (end < start) {
+                errorEl.textContent = 'End date cannot be before start date.';
+                errorEl.classList.add('show');
+                return;
+            }
+            const diffDays = (end - start) / (1000 * 60 * 60 * 24) + 1;
+            if (diffDays > 31) {
+                errorEl.textContent = 'Maximum range is 31 days.';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            // Generate date cards
+            const container = document.getElementById('dateCardsContainer');
+            container.innerHTML = '';
+            let current = new Date(start);
+            while (current <= end) {
+                const dateStr = current.toISOString().split('T')[0];
+                const card = document.createElement('div');
+                card.className = 'date-card';
+                card.textContent = formatDateDisplay(dateStr);
+                card.dataset.date = dateStr;
+                card.addEventListener('click', () => selectDate(dateStr, card));
+                container.appendChild(card);
+                current.setDate(current.getDate() + 1);
+            }
+            // Hide form if a date was previously selected
+            document.getElementById('taskFormCard').classList.remove('active');
+            selectedDate = null;
+        });
+
+        function selectDate(dateStr, cardElement) {
+            // Highlight selected card
+            document.querySelectorAll('.date-card').forEach(c => c.classList.remove('selected'));
+            cardElement.classList.add('selected');
+            selectedDate = dateStr;
+            document.getElementById('selectedDateLabel').textContent = formatDateDisplay(dateStr);
+            document.getElementById('taskFormCard').classList.add('active');
+            loadTasksForDate(dateStr);
+        }
+
+        // ========== Load existing tasks for the selected date ==========
+        async function loadTasksForDate(dateStr) {
+            const res = await fetch(API_BASE + '/api/scheduled-tasks?date=' + dateStr);
+            const data = await res.json();
+            existingTasks = data.tasks || [];
+            renderSavedTasks();
+            // Clear any overlap warning
+            document.getElementById('overlapWarning').classList.remove('show');
+        }
+
+        function renderSavedTasks() {
+            const container = document.getElementById('savedTasksContainer');
+            if (existingTasks.length === 0) {
+                container.innerHTML = '<p style="opacity:0.7; text-align:center;">No tasks yet for this day.</p>';
+                return;
+            }
+            container.innerHTML = existingTasks.map(task => `
+                <div class="saved-task-item">
+                    <div>
+                        <strong>${escapeHTML(task.taskName)}</strong>
+                        <span style="margin-left:12px; opacity:0.8;">${task.startTime} – ${task.endTime}</span>
+                    </div>
+                    <button class="delete-btn" data-id="${task.id}">×</button>
+                </div>
+            `).join('');
+
+            // Delete buttons
+            container.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const taskId = btn.dataset.id;
+                    if (confirm('Delete this task?')) {
+                        const res = await fetch(API_BASE + '/api/scheduled-tasks/' + taskId, { method: 'DELETE' });
+                        if (res.ok) {
+                            loadTasksForDate(selectedDate);
+                        }
+                    }
+                });
+            });
+        }
+
+        // ========== Time overlap check ==========
+        function doesOverlap(newStart, newEnd, tasks) {
+            const newStartMin = timeToMinutes(newStart);
+            const newEndMin = timeToMinutes(newEnd);
+            return tasks.some(task => {
+                const taskStart = timeToMinutes(task.startTime);
+                const taskEnd = timeToMinutes(task.endTime);
+                return (newStartMin < taskEnd && newEndMin > taskStart);
+            });
+        }
+
+        function timeToMinutes(timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        // Detect overlap while typing
+        document.getElementById('startTime').addEventListener('change', checkOverlap);
+        document.getElementById('endTime').addEventListener('change', checkOverlap);
+        function checkOverlap() {
+            if (!selectedDate) return;
+            const start = document.getElementById('startTime').value;
+            const end = document.getElementById('endTime').value;
+            if (!start || !end) return;
+            const warn = document.getElementById('overlapWarning');
+            if (doesOverlap(start, end, existingTasks)) {
+                warn.classList.add('show');
+            } else {
+                warn.classList.remove('show');
+            }
+        }
+
+        // ========== Add task ==========
+        document.getElementById('addTaskBtn').addEventListener('click', async () => {
+            const taskName = document.getElementById('taskName').value.trim();
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            const errorEl = document.getElementById('taskError');
+            errorEl.classList.remove('show');
+            errorEl.textContent = '';
+
+            if (!selectedDate) {
+                errorEl.textContent = 'Please select a date first.';
+                errorEl.classList.add('show');
+                return;
+            }
+            if (!taskName) {
+                errorEl.textContent = 'Task name is required.';
+                errorEl.classList.add('show');
+                return;
+            }
+            if (!startTime || !endTime) {
+                errorEl.textContent = 'Please select both start and end times.';
+                errorEl.classList.add('show');
+                return;
+            }
+            if (timeToMinutes(endTime) <= timeToMinutes(startTime)) {
+                errorEl.textContent = 'End time must be after start time.';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            // Check overlap (double-check)
+            if (doesOverlap(startTime, endTime, existingTasks)) {
+                errorEl.textContent = 'Time slot overlaps with an existing task.';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            // Send to server
+            const res = await fetch(API_BASE + '/api/scheduled-tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    date: selectedDate,
+                    taskName,
+                    startTime,
+                    endTime
+                })
+            });
+
+            const result = await res.json();
+            if (res.ok) {
+                // Clear form
+                document.getElementById('taskName').value = '';
+                document.getElementById('startTime').value = '09:00';
+                document.getElementById('endTime').value = '10:00';
+                // Reload tasks for the date
+                loadTasksForDate(selectedDate);
+                showToast('Task added!');
+            } else {
+                errorEl.textContent = result.error || 'Failed to add task.';
+                errorEl.classList.add('show');
+            }
+        });
+
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Simple toast
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#1e293b; color:#fff; padding:12px 24px; border-radius:25px; font-weight:600; z-index:999;';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+
+        // Init
+        checkSession();
+        // Set default date range to today → today+6
+        const today = getTodayStr();
+        document.getElementById('rangeStart').value = today;
+        const nextWeek = new Date(today + 'T00:00:00');
+        nextWeek.setDate(nextWeek.getDate() + 6);
+        document.getElementById('rangeEnd').value = nextWeek.toISOString().split('T')[0];
+    </script>
+</body>
+</html>

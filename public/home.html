@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home | Work Tracker</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .top-bar {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .top-bar .welcome {
+            font-weight: 600;
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            font-size: 1.5rem;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .notification-bell:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        .badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #ff4757;
+            color: #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            display: none;
+        }
+        .badge.show {
+            display: flex;
+        }
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            font-size: 0.85rem;
+        }
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.35);
+        }
+        .content {
+            max-width: 700px;
+            margin: 60px auto 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .option-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        @media (max-width: 500px) {
+            .option-cards { grid-template-columns: 1fr; }
+        }
+        .option-card {
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(15px);
+            border-radius: 24px;
+            padding: 40px 24px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        .option-card:hover {
+            transform: translateY(-6px);
+            background: rgba(255,255,255,0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+        }
+        .option-card .icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+        .option-card h3 {
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        .option-card p {
+            opacity: 0.8;
+            font-size: 0.95rem;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: #fff;
+            border-radius: 24px;
+            padding: 30px;
+            width: 90%;
+            max-width: 440px;
+            color: #2d3436;
+            box-shadow: 0 30px 50px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .modal h3 {
+            font-weight: 700;
+            margin-bottom: 18px;
+            font-size: 1.3rem;
+            text-align: center;
+        }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 14px;
+            border: 2px solid #dfe6e9;
+            font-size: 0.95rem;
+            outline: none;
+            font-family: inherit;
+        }
+        .search-box input:focus {
+            border-color: #5b6af0;
+        }
+        .search-box button {
+            background: #5b6af0;
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            padding: 0 20px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .user-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 14px;
+        }
+        .user-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: #f8f9fd;
+            margin-bottom: 8px;
+        }
+        .user-item span {
+            font-weight: 600;
+        }
+        .invite-btn {
+            background: #22c55e;
+            color: #fff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        .invite-btn:disabled {
+            background: #b2bec3;
+            cursor: not-allowed;
+        }
+        .close-modal {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            cursor: pointer;
+            color: #636e72;
+        }
+        .status-text {
+            text-align: center;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+        .notif-dropdown {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: #fff;
+            color: #2d3436;
+            border-radius: 18px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+            width: 340px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            z-index: 150;
+            padding: 8px;
+        }
+        .notif-dropdown.show {
+            display: block;
+        }
+        .notif-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8f9fd;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+        .notif-message {
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex: 1;
+        }
+        .notif-actions button {
+            margin-left: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .accept-btn { background: #22c55e; color: #fff; }
+        .reject-btn { background: #ff4757; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <span class="welcome" id="welcomeText">Welcome, </span>
+        <div class="top-right">
+            <div class="notification-bell" id="bellIcon">
+                🔔
+                <span class="badge" id="bellBadge">!</span>
+                <div class="notif-dropdown" id="notifDropdown"></div>
+            </div>
+            <button class="logout-btn" id="logoutBtn">🚪 Logout</button>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="option-cards">
+            <div class="option-card" id="soloOption">
+                <div class="icon">🧑</div>
+                <h3>Solo Tracking</h3>
+                <p>Track your own daily routine independently.</p>
+            </div>
+            <div class="option-card" id="linkOption">
+                <div class="icon" id="linkIcon">👫</div>
+                <h3 id="linkTitle">Link with Partner</h3>
+                <p id="linkDesc">Invite a partner and sync your work progress together.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="linkModalOverlay">
+        <div class="modal">
+            <button class="close-modal" id="closeLinkModal">&times;</button>
+            <h3>Find your partner</h3>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Enter username...">
+                <button id="searchBtn">Search</button>
+            </div>
+            <div class="user-list" id="userList"></div>
+            <div class="status-text" id="linkStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let currentUser = null;
+
+        async function fetchUser() {
+            const res = await fetch(API_BASE + '/api/check-session');
+            const data = await res.json();
+            if (data.loggedIn) {
+                currentUser = data.user;
+                document.getElementById('welcomeText').textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}`;
+                checkLinkStatus();
+            } else {
+                window.location.href = '/login.html';
+            }
+        }
+
+        async function checkLinkStatus() {
+            const res = await fetch(API_BASE + '/api/link-status');
+            const data = await res.json();
+            const linkBtn = document.getElementById('linkOption');
+            const title = document.getElementById('linkTitle');
+            const desc = document.getElementById('linkDesc');
+            const icon = document.getElementById('linkIcon');
+
+            if (data.linked) {
+                title.textContent = 'Open Partner Tracker';
+                desc.textContent = `You're linked with ${data.partnerFirstName}. View your shared progress.`;
+                icon.textContent = '🔗';
+                linkBtn.onclick = () => {
+                    window.location.href = '/tracker.html?mode=partner';
+                };
+                // Disable search modal for linked users
+                linkBtn._linked = true;
+            } else {
+                // Unlinked: clicking opens modal
+                linkBtn.onclick = () => {
+                    document.getElementById('linkModalOverlay').classList.add('active');
+                    document.getElementById('searchInput').value = '';
+                    document.getElementById('userList').innerHTML = '';
+                    document.getElementById('linkStatus').textContent = '';
+                };
+            }
+        }
+
+        document.getElementById('soloOption').addEventListener('click', () => {
+            window.location.href = '/tracker.html?mode=solo';
+        });
+
+        // Notification system (unchanged)
+        async function fetchNotifications() {
+            const res = await fetch(API_BASE + '/api/notifications');
+            const data = await res.json();
+            const dropdown = document.getElementById('notifDropdown');
+            const badge = document.getElementById('bellBadge');
+            dropdown.innerHTML = '';
+            if (data.invitations && data.invitations.length > 0) {
+                badge.classList.add('show');
+                badge.textContent = data.invitations.length;
+                data.invitations.forEach(inv => {
+                    const div = document.createElement('div');
+                    div.className = 'notif-item';
+                    div.innerHTML = `
+                        <span class="notif-message">${inv.fromName} wants to link with you</span>
+                        <div class="notif-actions">
+                            <button class="accept-btn" data-id="${inv.id}">✓ Accept</button>
+                            <button class="reject-btn" data-id="${inv.id}">✕ Reject</button>
+                        </div>
+                    `;
+                    dropdown.appendChild(div);
+                });
+                dropdown.querySelectorAll('.accept-btn').forEach(btn => {
+                    btn.addEventListener('click', () => respondInvite(btn.dataset.id, 'accept'));
+                });
+                dropdown.querySelectorAll('.reject-btn').forEach(btn => {
+                    btn.addEventListener('click', () => respondInvite(btn.dataset.id, 'reject'));
+                });
+            } else {
+                badge.classList.remove('show');
+                dropdown.innerHTML = '<div style="padding:12px;text-align:center;color:#636e72;">No new notifications</div>';
+            }
+        }
+
+        async function respondInvite(invitationId, action) {
+            const res = await fetch(API_BASE + '/api/invite/respond', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ invitationId, action })
+            });
+            const data = await res.json();
+            if (action === 'accept') {
+                alert(data.message);
+                // Refresh to update link status
+                location.reload();
+            } else {
+                fetchNotifications();
+            }
+        }
+
+        document.getElementById('bellIcon').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('notifDropdown').classList.toggle('show');
+        });
+        document.addEventListener('click', () => {
+            document.getElementById('notifDropdown').classList.remove('show');
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await fetch(API_BASE + '/api/logout', { method: 'POST' });
+            window.location.href = '/login.html';
+        });
+
+        // Modal search
+        document.getElementById('closeLinkModal').addEventListener('click', () => {
+            document.getElementById('linkModalOverlay').classList.remove('active');
+        });
+        document.getElementById('searchBtn').addEventListener('click', async () => {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
+            const res = await fetch(API_BASE + '/api/search-users?q=' + encodeURIComponent(query));
+            const data = await res.json();
+            const list = document.getElementById('userList');
+            list.innerHTML = '';
+            if (data.users && data.users.length > 0) {
+                data.users.forEach(user => {
+                    const div = document.createElement('div');
+                    div.className = 'user-item';
+                    div.innerHTML = `
+                        <span>${user.username} (${user.firstName})</span>
+                        <button class="invite-btn" data-username="${user.username}">Invite</button>
+                    `;
+                    list.appendChild(div);
+                });
+                list.querySelectorAll('.invite-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const partnerUsername = btn.dataset.username;
+                        const res = await fetch(API_BASE + '/api/invite', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ partnerUsername })
+                        });
+                        const result = await res.json();
+                        document.getElementById('linkStatus').textContent = result.message || result.error || 'Sent';
+                        if (result.success) {
+                            btn.disabled = true;
+                            btn.textContent = 'Invited';
+                        }
+                    });
+                });
+            } else {
+                list.innerHTML = '<div style="padding:10px;color:#636e72;">No users found.</div>';
+            }
+        });
+
+        // Init
+        fetchUser();
+        fetchNotifications();
+        setInterval(fetchNotifications, 20000);
+    </script>
+</body>
+</html>

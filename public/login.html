@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Tracker – Login</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px 32px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            width: 100%;
+            max-width: 440px;
+            color: #fff;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 32px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 40px;
+            padding: 4px;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            border-radius: 36px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: 0.3s;
+            color: rgba(255,255,255,0.8);
+        }
+        .tab.active {
+            background: #fff;
+            color: #5b6af0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .form-panel {
+            display: none;
+        }
+        .form-panel.active {
+            display: block;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 24px;
+            font-weight: 700;
+            font-size: 1.6rem;
+            letter-spacing: -0.5px;
+        }
+        .input-group {
+            margin-bottom: 18px;
+            position: relative;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: 0.3s;
+            font-family: inherit;
+        }
+        .input-group input::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+        .input-group input:focus {
+            border-color: #fff;
+            background: rgba(255,255,255,0.2);
+        }
+        .double-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            border: none;
+            background: #fff;
+            color: #5b6af0;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 8px;
+            font-family: inherit;
+            letter-spacing: 0.3px;
+        }
+        .btn:hover {
+            background: #f0f0ff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        .error-msg {
+            color: #ffb3b3;
+            font-size: 0.85rem;
+            margin-top: 8px;
+            text-align: center;
+            display: none;
+        }
+        .error-msg.show {
+            display: block;
+        }
+        .success-msg {
+            color: #b3ffb3;
+            font-size: 0.85rem;
+            text-align: center;
+            display: none;
+            margin-top: 8px;
+        }
+        .success-msg.show {
+            display: block;
+        }
+        .link-text {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+        }
+        .link-text span {
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" data-tab="login">🔑 Login</div>
+            <div class="tab" data-tab="register">✨ Create Account</div>
+        </div>
+
+        <!-- Login Panel -->
+        <div class="form-panel active" id="loginPanel">
+            <h2>Welcome back</h2>
+            <div class="input-group">
+                <input type="text" id="loginUsername" placeholder="Username" autocomplete="username">
+            </div>
+            <div class="input-group">
+                <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
+            </div>
+            <div class="error-msg" id="loginError"></div>
+            <button class="btn" id="loginBtn">Log In</button>
+            <div class="link-text">Don't have an account? <span id="goToRegister">Sign up</span></div>
+        </div>
+
+        <!-- Register Panel -->
+        <div class="form-panel" id="registerPanel">
+            <h2>Create your account</h2>
+            <div class="double-row">
+                <div class="input-group">
+                    <input type="text" id="firstName" placeholder="First name">
+                </div>
+                <div class="input-group">
+                    <input type="text" id="lastName" placeholder="Last name">
+                </div>
+            </div>
+            <div class="input-group">
+                <input type="text" id="regUsername" placeholder="Choose a username" autocomplete="off">
+                <div class="error-msg" id="usernameError"></div>
+            </div>
+            <div class="input-group">
+                <input type="password" id="regPassword" placeholder="Password" autocomplete="new-password">
+            </div>
+            <div class="input-group">
+                <input type="password" id="confirmPassword" placeholder="Confirm password">
+            </div>
+            <div class="error-msg" id="registerError"></div>
+            <div class="success-msg" id="registerSuccess"></div>
+            <button class="btn" id="registerBtn">Create Account</button>
+            <div class="link-text">Already have an account? <span id="goToLogin">Log in</span></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        // Tab switching
+        const tabs = document.querySelectorAll('.tab');
+        const panels = document.querySelectorAll('.form-panel');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const panelId = tab.dataset.tab === 'login' ? 'loginPanel' : 'registerPanel';
+                panels.forEach(p => p.classList.remove('active'));
+                document.getElementById(panelId).classList.add('active');
+            });
+        });
+        document.getElementById('goToRegister').addEventListener('click', () => {
+            document.querySelector('.tab[data-tab="register"]').click();
+        });
+        document.getElementById('goToLogin').addEventListener('click', () => {
+            document.querySelector('.tab[data-tab="login"]').click();
+        });
+
+        // Error display
+        function showError(elementId, msg) {
+            const el = document.getElementById(elementId);
+            el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 4000);
+        }
+
+        // Login
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            if (!username || !password) return showError('loginError', 'Please fill all fields.');
+
+            try {
+                const res = await fetch(API_BASE + '/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    window.location.href = '/home.html'; // redirect to tracker
+                } else {
+                    showError('loginError', data.error || 'Login failed.');
+                }
+            } catch (err) {
+                showError('loginError', 'Network error. Try again.');
+            }
+        });
+
+        // Register
+        document.getElementById('registerBtn').addEventListener('click', async () => {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+
+            if (!firstName || !lastName || !username || !password) {
+                return showError('registerError', 'All fields are required.');
+            }
+            if (password !== confirm) {
+                return showError('registerError', 'Passwords do not match.');
+            }
+            if (password.length < 4) {
+                return showError('registerError', 'Password must be at least 4 characters.');
+            }
+
+            try {
+                const res = await fetch(API_BASE + '/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ firstName, lastName, username, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('registerSuccess').textContent = 'Account created! Logging you in...';
+                    document.getElementById('registerSuccess').classList.add('show');
+                    // Auto-login after register: we can just redirect, the server sets session during register
+                    setTimeout(() => {
+                        window.location.href = '/home.html';
+                    }, 800);
+                } else {
+                    showError('registerError', data.error || 'Registration failed.');
+                }
+            } catch (err) {
+                showError('registerError', 'Network error.');
+            }
+        });
+
+        // Also allow Enter key to submit
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                if (document.getElementById('loginPanel').classList.contains('active')) {
+                    document.getElementById('loginBtn').click();
+                } else {
+                    document.getElementById('registerBtn').click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
