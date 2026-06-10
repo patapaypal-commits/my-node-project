@@ -1,0 +1,8 @@
+v: 0
+micros:
+  - name: tracker
+    src: .
+    engine: nodejs18
+    run: node server.js
+    public_routes:
+      - /
