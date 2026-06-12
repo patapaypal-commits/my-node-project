@@ -1,4 +1,7 @@
 node_modules/
-*.json
-!package.json
-.DS_Store
+users.json
+invitations.json
+links.json
+scheduled_tasks.json
+data_pair_*.json
+data_solo_*.json
