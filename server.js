@@ -8,6 +8,9 @@ const { v4: uuidv4 } = require('uuid');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ========== TRUST PROXY (REQUIRED FOR RAILWAY) ==========
+app.set('trust proxy', 1);
+
 // ========== PATHS ==========
 const USERS_FILE = path.join(__dirname, 'users.json');
 const INVITATIONS_FILE = path.join(__dirname, 'invitations.json');
@@ -19,12 +22,14 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
-    secret: 'your-secret-key-change-in-production',
+    secret: process.env.SESSION_SECRET || 'dev-secret',
     resave: false,
     saveUninitialized: false,
+    proxy: true,
     cookie: {
-        secure: false,
+        secure: true,
         httpOnly: true,
+        sameSite: 'none',
         maxAge: 1000 * 60 * 60 * 24 * 7
     }
 }));
@@ -339,8 +344,6 @@ app.post('/api/pair-data', (req, res) => {
 });
 
 // ========== SCHEDULED TASKS ROUTES ==========
-
-// GET - Your tasks for a date
 app.get('/api/scheduled-tasks', (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
     const date = req.query.date;
@@ -352,13 +355,12 @@ app.get('/api/scheduled-tasks', (req, res) => {
         .filter(t => t.date === date)
         .map(t => ({ 
             ...t, 
-            completed: t.completed === true,  // ensure boolean
-            taskName: t.taskName || 'Unnamed Task'  // ensure name exists
+            completed: t.completed === true,
+            taskName: t.taskName || 'Unnamed Task'
         }));
     res.json({ tasks: tasksForDate });
 });
 
-// GET - Partner's tasks for a date
 app.get('/api/partner-scheduled-tasks', (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
     const date = req.query.date;
@@ -381,12 +383,11 @@ app.get('/api/partner-scheduled-tasks', (req, res) => {
     res.json({ tasks: tasksForDate });
 });
 
-// POST - Create new task
 app.post('/api/scheduled-tasks', (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
     const { date, taskName, startTime, endTime } = req.body;
     if (!date || !taskName || !startTime || !endTime) {
-        return res.status(400).json({ error: 'Missing fields. All fields are required: date, taskName, startTime, endTime' });
+        return res.status(400).json({ error: 'Missing fields.' });
     }
 
     const today = new Date().toISOString().split('T')[0];
@@ -397,7 +398,6 @@ app.post('/api/scheduled-tasks', (req, res) => {
     if (!allTasks[username]) allTasks[username] = [];
     const userTasks = allTasks[username];
 
-    // Overlap check
     const overlap = userTasks.some(task => {
         if (task.date !== date) return false;
         const existStart = timeToMinutes(task.startTime);
@@ -426,7 +426,6 @@ app.post('/api/scheduled-tasks', (req, res) => {
     res.status(201).json({ success: true, task: newTask });
 });
 
-// PUT - Edit a task
 app.put('/api/scheduled-tasks/:id', (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
     const taskId = req.params.id;
@@ -440,7 +439,6 @@ app.put('/api/scheduled-tasks/:id', (req, res) => {
     const task = allTasks[username].find(t => t.id === taskId);
     if (!task) return res.status(404).json({ error: 'Task not found' });
 
-    // Check overlap excluding this task
     const otherTasks = allTasks[username].filter(t => t.id !== taskId && t.date === date);
     const newStart = timeToMinutes(startTime);
     const newEnd = timeToMinutes(endTime);
@@ -458,7 +456,6 @@ app.put('/api/scheduled-tasks/:id', (req, res) => {
     res.json({ success: true, task });
 });
 
-// PATCH - Mark task as complete
 app.patch('/api/scheduled-tasks/:id/complete', (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
     const taskId = req.params.id;
@@ -478,7 +475,6 @@ app.patch('/api/scheduled-tasks/:id/complete', (req, res) => {
     res.json({ success: true, task });
 });
 
-// DELETE - Remove a task
 app.delete('/api/scheduled-tasks/:id', (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
     const taskId = req.params.id;
@@ -496,5 +492,5 @@ app.delete('/api/scheduled-tasks/:id', (req, res) => {
 
 // ========== START ==========
 app.listen(PORT, () => {
-    console.log(`✅ Tracker running at http://localhost:${PORT}`);
+    console.log(`✅ Tracker running on port ${PORT}`);
 });
